@@ -3,7 +3,9 @@ package com.example.demo_kotlin.config
 import jakarta.persistence.EntityManagerFactory
 import javax.sql.DataSource
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.jdbc.DataSourceBuilder
+import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties
 import org.springframework.boot.jpa.EntityManagerFactoryBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -24,13 +26,17 @@ class PortalDataSourceConfig {
 
     @Primary
     @Bean
-    fun portalDataSource(env: Environment): DataSource {
-        return DataSourceBuilder.create()
-            .url(env.getProperty("spring.datasource.portal.url").toString())
-            .username(env.getProperty("spring.datasource.portal.username").toString())
-            .password(env.getProperty("spring.datasource.portal.password").toString())
-            .driverClassName(env.getProperty("spring.datasource.portal.driver-class-name").toString())
-            .build()
+    @ConfigurationProperties("spring.datasource.portal")
+    fun portalDataSourceProperties(): DataSourceProperties {
+        return DataSourceProperties()
+    }
+
+    @Primary
+    @Bean
+    fun portalDataSource(
+        @Qualifier("portalDataSourceProperties") portalProperties: DataSourceProperties
+    ): DataSource {
+        return portalProperties.initializeDataSourceBuilder().build()
     }
 
     @Primary

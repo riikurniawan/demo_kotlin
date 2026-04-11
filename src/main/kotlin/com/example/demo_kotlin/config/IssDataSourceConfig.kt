@@ -5,6 +5,7 @@ import javax.sql.DataSource
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.jdbc.DataSourceBuilder
+import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties
 import org.springframework.boot.jpa.EntityManagerFactoryBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -24,14 +25,17 @@ import org.springframework.transaction.PlatformTransactionManager
 )
 class IssDataSourceConfig {
 
+    @Bean(name = ["issDataSourceProperties"])
+    @ConfigurationProperties("spring.datasource.iss")
+    fun issDataSourceProperties(): DataSourceProperties {
+        return DataSourceProperties()
+    }
+
     @Bean(name = ["issDataSource"])
-    fun issDataSource(env: Environment): DataSource {
-        return DataSourceBuilder.create()
-            .url(env.getProperty("spring.datasource.iss.url").toString())
-            .username(env.getProperty("spring.datasource.iss.username").toString())
-            .password(env.getProperty("spring.datasource.iss.password").toString())
-            .driverClassName(env.getProperty("spring.datasource.iss.driver-class-name").toString())
-            .build()
+    fun issDataSource(
+        @Qualifier("issDataSourceProperties") issProperties: DataSourceProperties
+    ): DataSource {
+        return issProperties.initializeDataSourceBuilder().build()
     }
 
     @Bean(name = ["issEntityManagerFactory"])
