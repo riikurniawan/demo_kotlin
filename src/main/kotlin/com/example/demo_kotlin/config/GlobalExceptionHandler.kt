@@ -7,6 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
+import org.springframework.dao.DataIntegrityViolationException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -63,5 +64,14 @@ class GlobalExceptionHandler {
                 "errors" to errors
             )
         )
+        @ExceptionHandler(DataIntegrityViolationException::class)
+        fun handleDataIntegrityViolation(exception: DataIntegrityViolationException): ResponseEntity<Map<String, Any>> {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                mapOf(
+                    "success" to false,
+                    "message" to "Terjadi konflik data (Data Constraint Violation). Pastikan data yang dikirim unik dan sesuai batas."
+                )
+            )
+        }
     }
 }

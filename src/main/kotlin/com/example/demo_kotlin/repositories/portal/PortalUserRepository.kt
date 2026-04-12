@@ -17,4 +17,8 @@ interface PortalUserRepository : JpaRepository<PortalUser, Long> {
 		email: String,
 		pageable: Pageable
 	): Page<PortalUser>
+
+	fun findByEmail(email: String): PortalUser?
+
+	fun existsByEmail(email: String): Boolean
 }

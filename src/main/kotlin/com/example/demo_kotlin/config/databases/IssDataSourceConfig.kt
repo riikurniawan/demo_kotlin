@@ -1,4 +1,4 @@
-package com.example.demo_kotlin.config
+package com.example.demo_kotlin.config.databases
 
 import jakarta.persistence.EntityManagerFactory
 import javax.sql.DataSource
