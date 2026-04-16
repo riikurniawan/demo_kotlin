@@ -37,6 +37,10 @@ class JwtUtils {
         return extractAllClaims(token).subject
     }
 
+    fun extractExpiration(token: String): Date {
+        return extractAllClaims(token).expiration
+    }
+
     fun isTokenValid(token: String, userDetails: UserDetails): Boolean {
         val username = extractUsername(token)
         return (username == userDetails.username) && !isTokenExpired(token)

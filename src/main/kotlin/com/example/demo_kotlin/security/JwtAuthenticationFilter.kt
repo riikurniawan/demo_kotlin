@@ -4,7 +4,6 @@ import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Lazy
-import org.springframework.lang.NonNull
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetailsService
@@ -15,13 +14,14 @@ import org.springframework.web.filter.OncePerRequestFilter
 @Component
 class JwtAuthenticationFilter(
     private val jwtUtils: JwtUtils,
+    private val tokenBlacklistService: TokenBlacklistService,
     @Lazy private val userDetailsService: UserDetailsService
 ) : OncePerRequestFilter() {
 
     override fun doFilterInternal(
-        @NonNull request: HttpServletRequest,
-        @NonNull response: HttpServletResponse,
-        @NonNull filterChain: FilterChain
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        filterChain: FilterChain
     ) {
         val authHeader = request.getHeader("Authorization")
 
@@ -32,6 +32,13 @@ class JwtAuthenticationFilter(
 
         val jwtToken = authHeader.substring(7)
         try {
+            if (tokenBlacklistService.isTokenRevoked(jwtToken)) {
+                logger.warn("JWT token has been revoked")
+                SecurityContextHolder.clearContext()
+                filterChain.doFilter(request, response)
+                return
+            }
+
             val userEmail = jwtUtils.extractUsername(jwtToken)
 
             if (userEmail.isNotEmpty() && SecurityContextHolder.getContext().authentication == null) {
@@ -50,7 +57,7 @@ class JwtAuthenticationFilter(
                 }
             }
         } catch (e: Exception) {
-            logger.error("Tidak bisa mengatur otentikasi user: {} \${e.message}")
+            logger.error("Tidak bisa mengatur otentikasi user: ${e.message}", e)
         }
 
         filterChain.doFilter(request, response)

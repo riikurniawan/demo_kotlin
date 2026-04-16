@@ -50,10 +50,28 @@ class SecurityConfig(
         val isProd = env.activeProfiles.contains("prod")
 
         if (!isProd) {
-            // Development / Default: Lewati otentikasi
+            // Development / Default: JWT tetap aktif agar endpoint protected bisa dites dari lokal.
             http
                 .cors { } // Mengaktifkan CORS
-                .authorizeHttpRequests { it.anyRequest().permitAll() }
+                .authorizeHttpRequests { authz ->
+                    authz
+                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers(
+                            "/swagger-ui.html",
+                            "/swagger-ui/**",
+                            "/v3/api-docs/**",
+                            "/v3/api-docs.yaml"
+                        ).permitAll()
+                        .requestMatchers("/secure/**").authenticated()
+                        .anyRequest().permitAll()
+                }
+                .sessionManagement { session ->
+                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                }
+                .authenticationProvider(authProvider)
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter::class.java)
+                .httpBasic { it.disable() }
+                .formLogin { it.disable() }
                 .csrf { it.disable() }
             return http.build()
         }
@@ -63,8 +81,8 @@ class SecurityConfig(
             .cors { } // Mengaktifkan CORS
             .authorizeHttpRequests { authz ->
                 authz
-                    // Auth endpoints public
-                    .requestMatchers("/auth/**").permitAll()
+                    // Auth login endpoint public
+                    .requestMatchers("/auth/login").permitAll()
                     
                     // Allow public access to Swagger UI and API docs
                     .requestMatchers(
